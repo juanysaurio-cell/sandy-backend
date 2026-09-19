@@ -1,0 +1,172 @@
+/* =========================================================
+   ESTILOS GENERALES
+   ========================================================= */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #f4f6f8;
+  color: #333;
+  padding: 20px;
+}
+
+/* Contenedor principal del módulo */
+div[style*="padding"] {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: #ffffff;
+  padding: 30px !important;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+h2 {
+  color: #1a252f;
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 8px;
+  display: inline-block;
+}
+
+/* =========================================================
+   FORMULARIOS
+   ========================================================= */
+form {
+  background-color: #f8fafc;
+  padding: 18px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 25px !important;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+form input,
+form select {
+  flex: 1 1 180px;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: #fff;
+}
+
+form input:focus,
+form select:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+/* =========================================================
+   BOTONES
+   ========================================================= */
+button {
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* Botón Submit del Formulario */
+form button[type="submit"] {
+  background-color: #2ece71;
+  color: white;
+}
+
+form button[type="submit"]:hover {
+  background-color: #27ae60;
+}
+
+/* Botón Cancelar */
+form button[type="button"] {
+  background-color: #95a5a6;
+  color: white;
+}
+
+form button[type="button"]:hover {
+  background-color: #7f8c8d;
+}
+
+/* Botón Editar en Tabla */
+td button:nth-child(1) {
+  background-color: #f39c12;
+  color: white;
+  padding: 6px 12px;
+}
+
+td button:nth-child(1):hover {
+  background-color: #d35400;
+}
+
+/* Botón Eliminar en Tabla */
+td button:nth-child(2) {
+  background-color: #e74c3c;
+  color: white;
+  padding: 6px 12px;
+}
+
+td button:nth-child(2):hover {
+  background-color: #c0392b;
+}
+
+/* =========================================================
+   TABLAS
+   ========================================================= */
+table {
+  width: 100%;
+  border-collapse: collapse !important;
+  border: none !important;
+  margin-top: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+th, td {
+  padding: 12px 15px !important;
+  text-align: left;
+  border: none !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+th {
+  background-color: #1e293b;
+  color: #ffffff;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+tbody tr {
+  transition: background-color 0.2s;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #f8fafc;
+}
+
+tbody tr:hover {
+  background-color: #f1f5f9;
+}
+
+/* Ajuste de celda de acciones */
+td:last-child {
+  white-space: nowrap;
+}
