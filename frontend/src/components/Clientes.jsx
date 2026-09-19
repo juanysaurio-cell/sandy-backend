@@ -158,7 +158,7 @@ function Clientes() {
           </tr>
         </thead>
         <tbody>
-          {clientes.map(c => (
+          {clientes?.map(c => (
             <tr key={c.id_cliente}>
               <td>{c.id_cliente}</td>
               <td>{c.nomCliente}</td>
