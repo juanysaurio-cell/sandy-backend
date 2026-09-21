@@ -143,7 +143,7 @@ function Productos() {
           </tr>
         </thead>
         <tbody>
-          {productos.map(p => (
+          {Array.isArray(productos) && productos.map(p => (
             <tr key={p.id_producto}>
               <td>{p.id_producto}</td>
               <td>{p.nomProducto}</td>
