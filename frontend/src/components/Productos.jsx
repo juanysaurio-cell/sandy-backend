@@ -15,11 +15,10 @@ function Productos() {
   const [formData, setFormData] = useState(estadoInicialForm);
   const [editandoId, setEditandoId] = useState(null);
 
- const obtenerProductos = () => {
+  const obtenerProductos = () => {
     setCargando(true);
     api.get('/productos')
       .then(response => {
-        // Asegurar que sea array, ya sea directo o dentro de .data
         const dataReal = Array.isArray(response.data) 
           ? response.data 
           : (response.data.data || []);
@@ -32,6 +31,11 @@ function Productos() {
         console.error(err);
       });
   };
+
+  // ESTO ES LO QUE HACÍA QUE SE QUEDARA CARGANDO:
+  useEffect(() => {
+    obtenerProductos();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
