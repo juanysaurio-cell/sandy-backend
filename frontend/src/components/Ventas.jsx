@@ -116,7 +116,7 @@ function Ventas() {
           required
         >
           <option value="">-- Selecciona un Cliente --</option>
-          {clientes.map(c => (
+          {Array.isArray(clientes) && clientes.map(c => (
             <option key={c.id_cliente} value={c.id_cliente}>
               {c.nomCliente}
             </option>
@@ -175,7 +175,7 @@ function Ventas() {
           </tr>
         </thead>
         <tbody>
-          {ventas.map(v => (
+          {Array.isArray(ventas) && ventas.map(v => (
             <tr key={v.id_venta}>
               <td>{v.id_venta}</td>
               <td>{v.nomCliente}</td>
