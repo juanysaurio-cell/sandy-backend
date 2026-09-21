@@ -8,10 +8,19 @@ import Ventas from "./components/Ventas";
 function App() {
     return (
         <BrowserRouter>
-
             <Menu />
 
             <Routes>
+                {/* Ruta de bienvenida para la raíz */}
+                <Route 
+                    path="/" 
+                    element={
+                        <div style={{ padding: '20px', textAlign: 'center' }}>
+                            <h2>Bienvenido a Sandy</h2>
+                            <p>Selecciona una opción en el menú superior para empezar.</p>
+                        </div>
+                    } 
+                />
 
                 <Route
                     path="/productos"
@@ -27,12 +36,9 @@ function App() {
                     path="/ventas"
                     element={<Ventas />}
                 />
-
             </Routes>
-
         </BrowserRouter>
     );
 }
 
 export default App;
-
