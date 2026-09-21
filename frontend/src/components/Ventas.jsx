@@ -26,8 +26,11 @@ function Ventas() {
       api.get('/clientes')
     ])
       .then(([resVentas, resClientes]) => {
-        setVentas(resVentas.data);
-        setClientes(resClientes.data);
+        const ventasReal = Array.isArray(resVentas.data) ? resVentas.data : (resVentas.data.data || []);
+        const clientesReal = Array.isArray(resClientes.data) ? resClientes.data : (resClientes.data.data || []);
+        
+        setVentas(ventasReal);
+        setClientes(clientesReal);
         setCargando(false);
       })
       .catch(err => {

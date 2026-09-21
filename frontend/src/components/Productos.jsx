@@ -15,11 +15,15 @@ function Productos() {
   const [formData, setFormData] = useState(estadoInicialForm);
   const [editandoId, setEditandoId] = useState(null);
 
-  const obtenerProductos = () => {
+ const obtenerProductos = () => {
     setCargando(true);
     api.get('/productos')
       .then(response => {
-        setProductos(response.data);
+        // Asegurar que sea array, ya sea directo o dentro de .data
+        const dataReal = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data.data || []);
+        setProductos(dataReal);
         setCargando(false);
       })
       .catch(err => {
@@ -28,10 +32,6 @@ function Productos() {
         console.error(err);
       });
   };
-
-  useEffect(() => {
-    obtenerProductos();
-  }, []);
 
   const handleChange = (e) => {
     setFormData({

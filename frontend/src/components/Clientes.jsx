@@ -22,7 +22,10 @@ function Clientes() {
     setCargando(true);
     api.get('/clientes')
       .then(response => {
-        setClientes(response.data);
+        const dataReal = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data.data || []);
+        setClientes(dataReal);
         setCargando(false);
       })
       .catch(err => {
