@@ -17,14 +17,13 @@ function Ventas() {
   const [formData, setFormData] = useState(estadoInicialForm);
   const [editandoId, setEditandoId] = useState(null);
 
-  // Cargar datos por separado para evitar que un fallo de relación rompa la vista
   const cargarDatos = async () => {
     setCargando(true);
     setError(null);
 
     const [resVentas, resClientes] = await Promise.all([
       supabase.from('ventas').select('*').order('id_venta', { ascending: true }),
-      supabase.from('clientes').select('*').order('nomCliente', { ascending: true })
+      supabase.from('clientes').select('*').order('nomcliente', { ascending: true })
     ]);
 
     if (resVentas.error || resClientes.error) {
@@ -51,7 +50,6 @@ function Ventas() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Asegurar formato de fecha con hora para que PostgreSQL no rechace el TIMESTAMP
     const fechaConHora = formData.fecha_venta.includes('T') 
       ? formData.fecha_venta 
       : `${formData.fecha_venta}T00:00:00`;
@@ -123,10 +121,9 @@ function Ventas() {
     }
   };
 
-  // Buscar el nombre del cliente directamente en el arreglo local
   const obtenerNombreCliente = (id_cliente) => {
     const clienteEncontrado = clientes.find(c => c.id_cliente === id_cliente);
-    return clienteEncontrado ? clienteEncontrado.nomCliente : 'Sin cliente';
+    return clienteEncontrado ? clienteEncontrado.nomcliente : 'Sin cliente';
   };
 
   if (cargando) return <p>Cargando ventas...</p>;
@@ -146,7 +143,7 @@ function Ventas() {
           <option value="">-- Selecciona un Cliente --</option>
           {clientes.map(c => (
             <option key={c.id_cliente} value={c.id_cliente}>
-              {c.nomCliente}
+              {c.nomcliente}
             </option>
           ))}
         </select>
