@@ -17,17 +17,18 @@ function Ventas() {
   const [formData, setFormData] = useState(estadoInicialForm);
   const [editandoId, setEditandoId] = useState(null);
 
+  // Cargar datos por separado para evitar que un fallo de relación rompa la vista
   const cargarDatos = async () => {
     setCargando(true);
-    
-    // Consultar ventas y clientes en paralelo desde Supabase
+    setError(null);
+
     const [resVentas, resClientes] = await Promise.all([
-      supabase.from('ventas').select('*, clientes(nomCliente)').order('id_venta', { ascending: true }),
+      supabase.from('ventas').select('*').order('id_venta', { ascending: true }),
       supabase.from('clientes').select('*').order('nomCliente', { ascending: true })
     ]);
 
     if (resVentas.error || resClientes.error) {
-      setError('No se pudo cargar la información');
+      setError('Error al cargar datos: ' + (resVentas.error?.message || resClientes.error?.message));
       console.error(resVentas.error || resClientes.error);
     } else {
       setVentas(resVentas.data || []);
@@ -50,9 +51,14 @@ function Ventas() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Asegurar formato de fecha con hora para que PostgreSQL no rechace el TIMESTAMP
+    const fechaConHora = formData.fecha_venta.includes('T') 
+      ? formData.fecha_venta 
+      : `${formData.fecha_venta}T00:00:00`;
+
     const payload = {
       id_cliente: parseInt(formData.id_cliente, 10),
-      fecha_venta: formData.fecha_venta,
+      fecha_venta: fechaConHora,
       total: parseFloat(formData.total),
       estado: formData.estado
     };
@@ -64,6 +70,7 @@ function Ventas() {
         .eq('id_venta', editandoId);
 
       if (error) {
+        alert('Error al actualizar venta: ' + error.message);
         console.error('Error al actualizar venta:', error);
       } else {
         cargarDatos();
@@ -75,6 +82,7 @@ function Ventas() {
         .insert([payload]);
 
       if (error) {
+        alert('Error al registrar venta: ' + error.message);
         console.error('Error al registrar venta:', error);
       } else {
         cargarDatos();
@@ -107,6 +115,7 @@ function Ventas() {
         .eq('id_venta', id);
 
       if (error) {
+        alert('Error al eliminar venta: ' + error.message);
         console.error('Error al eliminar venta:', error);
       } else {
         cargarDatos();
@@ -114,8 +123,14 @@ function Ventas() {
     }
   };
 
+  // Buscar el nombre del cliente directamente en el arreglo local
+  const obtenerNombreCliente = (id_cliente) => {
+    const clienteEncontrado = clientes.find(c => c.id_cliente === id_cliente);
+    return clienteEncontrado ? clienteEncontrado.nomCliente : 'Sin cliente';
+  };
+
   if (cargando) return <p>Cargando ventas...</p>;
-  if (error) return <p>{error}</p>;
+  if (error) return <p style={{ color: 'red' }}>{error}</p>;
 
   return (
     <div style={{ padding: '20px' }}>
@@ -190,7 +205,7 @@ function Ventas() {
           {ventas.map(v => (
             <tr key={v.id_venta}>
               <td>{v.id_venta}</td>
-              <td>{v.clientes?.nomCliente || 'Sin cliente'}</td>
+              <td>{obtenerNombreCliente(v.id_cliente)}</td>
               <td>{v.fecha_venta ? v.fecha_venta.split('T')[0] : ''}</td>
               <td>{v.total}</td>
               <td>{v.estado}</td>
