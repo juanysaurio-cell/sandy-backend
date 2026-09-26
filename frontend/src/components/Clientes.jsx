@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { supabase } from "../services/supabaseClient"; // ✅ Esto es correcto porque entra a la carpeta 'services'
+import { supabase } from "../services/supabaseClient";
 
 const estadoInicialForm = {
-  nomCliente: '',
+  nomcliente: '',
   contacto: '',
   departamento: '',
   ciudad: ''
@@ -16,16 +16,16 @@ function Clientes() {
   const [formData, setFormData] = useState(estadoInicialForm);
   const [editandoId, setEditandoId] = useState(null);
 
-  // Obtener clientes desde Supabase
   const obtenerClientes = async () => {
     setCargando(true);
+    setError(null);
     const { data, error } = await supabase
       .from('clientes')
       .select('*')
       .order('id_cliente', { ascending: true });
 
     if (error) {
-      setError('No se pudo cargar la lista de clientes');
+      setError('No se pudo cargar la lista de clientes: ' + error.message);
       console.error(error);
     } else {
       setClientes(data || []);
@@ -48,25 +48,25 @@ function Clientes() {
     e.preventDefault();
 
     if (editandoId) {
-      // Actualizar cliente
       const { error } = await supabase
         .from('clientes')
         .update(formData)
         .eq('id_cliente', editandoId);
 
       if (error) {
+        alert('Error al actualizar cliente: ' + error.message);
         console.error('Error al actualizar:', error);
       } else {
         obtenerClientes();
         cancelarEdicion();
       }
     } else {
-      // Crear nuevo cliente
       const { error } = await supabase
         .from('clientes')
         .insert([formData]);
 
       if (error) {
+        alert('Error al crear cliente: ' + error.message);
         console.error('Error al crear:', error);
       } else {
         obtenerClientes();
@@ -78,7 +78,7 @@ function Clientes() {
   const prepararEdicion = (cliente) => {
     setEditandoId(cliente.id_cliente);
     setFormData({
-      nomCliente: cliente.nomCliente,
+      nomcliente: cliente.nomcliente,
       contacto: cliente.contacto,
       departamento: cliente.departamento,
       ciudad: cliente.ciudad
@@ -98,6 +98,7 @@ function Clientes() {
         .eq('id_cliente', id);
 
       if (error) {
+        alert('Error al eliminar cliente: ' + error.message);
         console.error('Error al eliminar:', error);
       } else {
         obtenerClientes();
@@ -106,7 +107,7 @@ function Clientes() {
   };
 
   if (cargando) return <p>Cargando clientes...</p>;
-  if (error) return <p>{error}</p>;
+  if (error) return <p style={{ color: 'red' }}>{error}</p>;
 
   return (
     <div style={{ padding: '20px' }}>
@@ -115,9 +116,9 @@ function Clientes() {
       <form onSubmit={handleSubmit} style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
         <input
           type="text"
-          name="nomCliente"
+          name="nomcliente"
           placeholder="Nombre Cliente"
-          value={formData.nomCliente}
+          value={formData.nomcliente}
           onChange={handleChange}
           required
         />
@@ -171,7 +172,7 @@ function Clientes() {
           {clientes.map(c => (
             <tr key={c.id_cliente}>
               <td>{c.id_cliente}</td>
-              <td>{c.nomCliente}</td>
+              <td>{c.nomcliente}</td>
               <td>{c.contacto}</td>
               <td>{c.departamento}</td>
               <td>{c.ciudad}</td>

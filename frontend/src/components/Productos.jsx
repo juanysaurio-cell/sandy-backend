@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 
 const estadoInicialForm = {
-  nomProducto: '',
+  nomproducto: '',
   cantidad: '',
   precio: ''
 };
@@ -17,13 +17,14 @@ function Productos() {
 
   const obtenerProductos = async () => {
     setCargando(true);
+    setError(null);
     const { data, error } = await supabase
       .from('productos')
       .select('*')
       .order('id_producto', { ascending: true });
 
     if (error) {
-      setError('No se pudo cargar la lista de productos');
+      setError('No se pudo cargar la lista de productos: ' + error.message);
       console.error(error);
     } else {
       setProductos(data || []);
@@ -46,7 +47,7 @@ function Productos() {
     e.preventDefault();
 
     const payload = {
-      nomProducto: formData.nomProducto,
+      nomproducto: formData.nomproducto,
       cantidad: parseInt(formData.cantidad, 10),
       precio: parseFloat(formData.precio)
     };
@@ -58,6 +59,7 @@ function Productos() {
         .eq('id_producto', editandoId);
 
       if (error) {
+        alert('Error al actualizar producto: ' + error.message);
         console.error('Error al actualizar producto:', error);
       } else {
         obtenerProductos();
@@ -69,6 +71,7 @@ function Productos() {
         .insert([payload]);
 
       if (error) {
+        alert('Error al crear producto: ' + error.message);
         console.error('Error al crear producto:', error);
       } else {
         obtenerProductos();
@@ -80,7 +83,7 @@ function Productos() {
   const prepararEdicion = (producto) => {
     setEditandoId(producto.id_producto);
     setFormData({
-      nomProducto: producto.nomProducto,
+      nomproducto: producto.nomproducto,
       cantidad: producto.cantidad,
       precio: producto.precio
     });
@@ -99,6 +102,7 @@ function Productos() {
         .eq('id_producto', id);
 
       if (error) {
+        alert('Error al eliminar producto: ' + error.message);
         console.error('Error al eliminar producto:', error);
       } else {
         obtenerProductos();
@@ -107,7 +111,7 @@ function Productos() {
   };
 
   if (cargando) return <p>Cargando productos...</p>;
-  if (error) return <p>{error}</p>;
+  if (error) return <p style={{ color: 'red' }}>{error}</p>;
 
   return (
     <div style={{ padding: '20px' }}>
@@ -116,9 +120,9 @@ function Productos() {
       <form onSubmit={handleSubmit} style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
         <input
           type="text"
-          name="nomProducto"
+          name="nomproducto"
           placeholder="Nombre del Producto"
-          value={formData.nomProducto}
+          value={formData.nomproducto}
           onChange={handleChange}
           required
         />
@@ -164,7 +168,7 @@ function Productos() {
           {productos.map(p => (
             <tr key={p.id_producto}>
               <td>{p.id_producto}</td>
-              <td>{p.nomProducto}</td>
+              <td>{p.nomproducto}</td>
               <td>{p.cantidad}</td>
               <td>{p.precio}</td>
               <td>
