@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api from '../services/api';
+import { supabase } from '../supabaseClient';
 
 const estadoInicialForm = {
   id_cliente: '',
@@ -14,37 +14,32 @@ function Ventas() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
-  // Estados para el CRUD
   const [formData, setFormData] = useState(estadoInicialForm);
   const [editandoId, setEditandoId] = useState(null);
 
-  // Cargar ventas y clientes al inicializar
-  const cargarDatos = () => {
+  const cargarDatos = async () => {
     setCargando(true);
-    Promise.all([
-      api.get('/ventas'),
-      api.get('/clientes')
-    ])
-      .then(([resVentas, resClientes]) => {
-        const ventasReal = Array.isArray(resVentas.data) ? resVentas.data : (resVentas.data.data || []);
-        const clientesReal = Array.isArray(resClientes.data) ? resClientes.data : (resClientes.data.data || []);
-        
-        setVentas(ventasReal);
-        setClientes(clientesReal);
-        setCargando(false);
-      })
-      .catch(err => {
-        setError('No se pudo cargar la información');
-        setCargando(false);
-        console.error(err);
-      });
+    
+    // Consultar ventas y clientes en paralelo desde Supabase
+    const [resVentas, resClientes] = await Promise.all([
+      supabase.from('ventas').select('*, clientes(nomCliente)').order('id_venta', { ascending: true }),
+      supabase.from('clientes').select('*').order('nomCliente', { ascending: true })
+    ]);
+
+    if (resVentas.error || resClientes.error) {
+      setError('No se pudo cargar la información');
+      console.error(resVentas.error || resClientes.error);
+    } else {
+      setVentas(resVentas.data || []);
+      setClientes(resClientes.data || []);
+    }
+    setCargando(false);
   };
 
   useEffect(() => {
     cargarDatos();
   }, []);
 
-  // Manejar cambios en las entradas del formulario
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -52,33 +47,44 @@ function Ventas() {
     });
   };
 
-  // Crear o Actualizar Venta
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const payload = {
+      id_cliente: parseInt(formData.id_cliente, 10),
+      fecha_venta: formData.fecha_venta,
+      total: parseFloat(formData.total),
+      estado: formData.estado
+    };
+
     if (editandoId) {
-      // Actualizar venta
-      api.put(`/ventas/${editandoId}`, formData)
-        .then(() => {
-          cargarDatos();
-          cancelarEdicion();
-        })
-        .catch(err => console.error('Error al actualizar venta:', err));
+      const { error } = await supabase
+        .from('ventas')
+        .update(payload)
+        .eq('id_venta', editandoId);
+
+      if (error) {
+        console.error('Error al actualizar venta:', error);
+      } else {
+        cargarDatos();
+        cancelarEdicion();
+      }
     } else {
-      // Crear nueva venta
-      api.post('/ventas', formData)
-        .then(() => {
-          cargarDatos();
-          setFormData(estadoInicialForm);
-        })
-        .catch(err => console.error('Error al registrar venta:', err));
+      const { error } = await supabase
+        .from('ventas')
+        .insert([payload]);
+
+      if (error) {
+        console.error('Error al registrar venta:', error);
+      } else {
+        cargarDatos();
+        setFormData(estadoInicialForm);
+      }
     }
   };
 
-  // Cargar datos de la venta en el formulario
   const prepararEdicion = (venta) => {
     setEditandoId(venta.id_venta);
-    // Formatear la fecha si viene con hora (ISO)
     const fechaFormateada = venta.fecha_venta ? venta.fecha_venta.split('T')[0] : '';
     setFormData({
       id_cliente: venta.id_cliente,
@@ -88,18 +94,23 @@ function Ventas() {
     });
   };
 
-  // Resetear formulario
   const cancelarEdicion = () => {
     setEditandoId(null);
     setFormData(estadoInicialForm);
   };
 
-  // Eliminar Venta
-  const eliminarVenta = (id) => {
+  const eliminarVenta = async (id) => {
     if (window.confirm('¿Seguro que deseas eliminar esta venta?')) {
-      api.delete(`/ventas/${id}`)
-        .then(() => cargarDatos())
-        .catch(err => console.error('Error al eliminar venta:', err));
+      const { error } = await supabase
+        .from('ventas')
+        .delete()
+        .eq('id_venta', id);
+
+      if (error) {
+        console.error('Error al eliminar venta:', error);
+      } else {
+        cargarDatos();
+      }
     }
   };
 
@@ -110,7 +121,6 @@ function Ventas() {
     <div style={{ padding: '20px' }}>
       <h2>Gestión de Ventas</h2>
 
-      {/* Formulario de Registro / Edición */}
       <form onSubmit={handleSubmit} style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
         <select
           name="id_cliente"
@@ -119,7 +129,7 @@ function Ventas() {
           required
         >
           <option value="">-- Selecciona un Cliente --</option>
-          {Array.isArray(clientes) && clientes.map(c => (
+          {clientes.map(c => (
             <option key={c.id_cliente} value={c.id_cliente}>
               {c.nomCliente}
             </option>
@@ -165,7 +175,6 @@ function Ventas() {
         )}
       </form>
 
-      {/* Tabla de Ventas */}
       <table border="1" cellPadding="8" style={{ borderCollapse: 'collapse', width: '100%' }}>
         <thead>
           <tr>
@@ -178,10 +187,10 @@ function Ventas() {
           </tr>
         </thead>
         <tbody>
-          {Array.isArray(ventas) && ventas.map(v => (
+          {ventas.map(v => (
             <tr key={v.id_venta}>
               <td>{v.id_venta}</td>
-              <td>{v.nomCliente}</td>
+              <td>{v.clientes?.nomCliente || 'Sin cliente'}</td>
               <td>{v.fecha_venta ? v.fecha_venta.split('T')[0] : ''}</td>
               <td>{v.total}</td>
               <td>{v.estado}</td>

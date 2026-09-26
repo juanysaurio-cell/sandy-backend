@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api from '../services/api';
+import { supabase } from '../supabaseClient';
 
 const estadoInicialForm = {
   nomProducto: '',
@@ -15,24 +15,22 @@ function Productos() {
   const [formData, setFormData] = useState(estadoInicialForm);
   const [editandoId, setEditandoId] = useState(null);
 
-  const obtenerProductos = () => {
+  const obtenerProductos = async () => {
     setCargando(true);
-    api.get('/productos')
-      .then(response => {
-        const dataReal = Array.isArray(response.data) 
-          ? response.data 
-          : (response.data.data || []);
-        setProductos(dataReal);
-        setCargando(false);
-      })
-      .catch(err => {
-        setError('No se pudo cargar la lista de productos');
-        setCargando(false);
-        console.error(err);
-      });
+    const { data, error } = await supabase
+      .from('productos')
+      .select('*')
+      .order('id_producto', { ascending: true });
+
+    if (error) {
+      setError('No se pudo cargar la lista de productos');
+      console.error(error);
+    } else {
+      setProductos(data || []);
+    }
+    setCargando(false);
   };
 
-  // ESTO ES LO QUE HACÍA QUE SE QUEDARA CARGANDO:
   useEffect(() => {
     obtenerProductos();
   }, []);
@@ -44,7 +42,7 @@ function Productos() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const payload = {
@@ -54,19 +52,28 @@ function Productos() {
     };
 
     if (editandoId) {
-      api.put(`/productos/${editandoId}`, payload)
-        .then(() => {
-          obtenerProductos();
-          cancelarEdicion();
-        })
-        .catch(err => console.error('Error al actualizar producto:', err));
+      const { error } = await supabase
+        .from('productos')
+        .update(payload)
+        .eq('id_producto', editandoId);
+
+      if (error) {
+        console.error('Error al actualizar producto:', error);
+      } else {
+        obtenerProductos();
+        cancelarEdicion();
+      }
     } else {
-      api.post('/productos', payload)
-        .then(() => {
-          obtenerProductos();
-          setFormData(estadoInicialForm);
-        })
-        .catch(err => console.error('Error al crear producto:', err));
+      const { error } = await supabase
+        .from('productos')
+        .insert([payload]);
+
+      if (error) {
+        console.error('Error al crear producto:', error);
+      } else {
+        obtenerProductos();
+        setFormData(estadoInicialForm);
+      }
     }
   };
 
@@ -84,11 +91,18 @@ function Productos() {
     setFormData(estadoInicialForm);
   };
 
-  const eliminarProducto = (id) => {
+  const eliminarProducto = async (id) => {
     if (window.confirm('¿Seguro que deseas eliminar este producto?')) {
-      api.delete(`/productos/${id}`)
-        .then(() => obtenerProductos())
-        .catch(err => console.error('Error al eliminar producto:', err));
+      const { error } = await supabase
+        .from('productos')
+        .delete()
+        .eq('id_producto', id);
+
+      if (error) {
+        console.error('Error al eliminar producto:', error);
+      } else {
+        obtenerProductos();
+      }
     }
   };
 
@@ -147,7 +161,7 @@ function Productos() {
           </tr>
         </thead>
         <tbody>
-          {Array.isArray(productos) && productos.map(p => (
+          {productos.map(p => (
             <tr key={p.id_producto}>
               <td>{p.id_producto}</td>
               <td>{p.nomProducto}</td>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api from '../services/api';
+import { supabase } from '../supabaseClient';
 
 const estadoInicialForm = {
   nomCliente: '',
@@ -13,33 +13,30 @@ function Clientes() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
-  // Estados para el CRUD
   const [formData, setFormData] = useState(estadoInicialForm);
   const [editandoId, setEditandoId] = useState(null);
 
-  // Obtener clientes al cargar
-  const obtenerClientes = () => {
+  // Obtener clientes desde Supabase
+  const obtenerClientes = async () => {
     setCargando(true);
-    api.get('/clientes')
-      .then(response => {
-        const dataReal = Array.isArray(response.data) 
-          ? response.data 
-          : (response.data.data || []);
-        setClientes(dataReal);
-        setCargando(false);
-      })
-      .catch(err => {
-        setError('No se pudo cargar la lista de clientes');
-        setCargando(false);
-        console.error(err);
-      });
+    const { data, error } = await supabase
+      .from('clientes')
+      .select('*')
+      .order('id_cliente', { ascending: true });
+
+    if (error) {
+      setError('No se pudo cargar la lista de clientes');
+      console.error(error);
+    } else {
+      setClientes(data || []);
+    }
+    setCargando(false);
   };
 
   useEffect(() => {
     obtenerClientes();
   }, []);
 
-  // Manejar cambios en los inputs
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -47,30 +44,37 @@ function Clientes() {
     });
   };
 
-  // Crear o Actualizar
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (editandoId) {
       // Actualizar cliente
-      api.put(`/clientes/${editandoId}`, formData)
-        .then(() => {
-          obtenerClientes();
-          cancelarEdicion();
-        })
-        .catch(err => console.error('Error al actualizar:', err));
+      const { error } = await supabase
+        .from('clientes')
+        .update(formData)
+        .eq('id_cliente', editandoId);
+
+      if (error) {
+        console.error('Error al actualizar:', error);
+      } else {
+        obtenerClientes();
+        cancelarEdicion();
+      }
     } else {
       // Crear nuevo cliente
-      api.post('/clientes', formData)
-        .then(() => {
-          obtenerClientes();
-          setFormData(estadoInicialForm);
-        })
-        .catch(err => console.error('Error al crear:', err));
+      const { error } = await supabase
+        .from('clientes')
+        .insert([formData]);
+
+      if (error) {
+        console.error('Error al crear:', error);
+      } else {
+        obtenerClientes();
+        setFormData(estadoInicialForm);
+      }
     }
   };
 
-  // Preparar formulario para edición
   const prepararEdicion = (cliente) => {
     setEditandoId(cliente.id_cliente);
     setFormData({
@@ -81,18 +85,23 @@ function Clientes() {
     });
   };
 
-  // Cancelar edición
   const cancelarEdicion = () => {
     setEditandoId(null);
     setFormData(estadoInicialForm);
   };
 
-  // Eliminar cliente
-  const eliminarCliente = (id) => {
+  const eliminarCliente = async (id) => {
     if (window.confirm('¿Seguro que deseas eliminar este cliente?')) {
-      api.delete(`/clientes/${id}`)
-        .then(() => obtenerClientes())
-        .catch(err => console.error('Error al eliminar:', err));
+      const { error } = await supabase
+        .from('clientes')
+        .delete()
+        .eq('id_cliente', id);
+
+      if (error) {
+        console.error('Error al eliminar:', error);
+      } else {
+        obtenerClientes();
+      }
     }
   };
 
@@ -103,7 +112,6 @@ function Clientes() {
     <div style={{ padding: '20px' }}>
       <h2>Gestión de Clientes</h2>
 
-      {/* Formulario de Registro / Edición */}
       <form onSubmit={handleSubmit} style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
         <input
           type="text"
@@ -148,7 +156,6 @@ function Clientes() {
         )}
       </form>
 
-      {/* Tabla de Clientes */}
       <table border="1" cellPadding="8" style={{ borderCollapse: 'collapse', width: '100%' }}>
         <thead>
           <tr>
@@ -161,7 +168,7 @@ function Clientes() {
           </tr>
         </thead>
         <tbody>
-          {clientes?.map(c => (
+          {clientes.map(c => (
             <tr key={c.id_cliente}>
               <td>{c.id_cliente}</td>
               <td>{c.nomCliente}</td>
